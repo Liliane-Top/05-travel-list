@@ -1,18 +1,25 @@
-import { computeHeadingLevel } from "@testing-library/react";
 import { useState } from "react";
 
-const initialItems = [
-  { id: 1, description: "Passports", quantity: 2, packed: false },
-  { id: 2, description: "Socks", quantity: 12, packed: false },
-  { id: 3, description: "charger", quantity: 1, packed: true },
-];
+// const initialItems = [
+//   { id: 1, description: "Passports", quantity: 2, packed: false },
+//   { id: 2, description: "Socks", quantity: 12, packed: false },
+//   { id: 3, description: "charger", quantity: 1, packed: true },
+// ];
 
 export default function App() {
+  //this state is lifted from Form component to be able to share with PackingList component
+  const [items, setItems] = useState([]);
+  //the setter function belonging to the state which has been lifted
+  function handleAddItem(item) {
+    setItems((items) => [...items, item]);
+  }
   return (
     <div className="app">
       <Logo />
-      <Form />
-      <PackingList />
+      {/* to give access from the Form prop to access the handleAddItem method */}
+      <Form onAddItems={handleAddItem} />
+      {/* to give Packinglist access to the array of items to display */}
+      <PackingList items={items} />
       <Stats />
     </div>
   );
@@ -22,15 +29,16 @@ function Logo() {
   return <h1> 🌴 Far Away 🧳 </h1>;
 }
 
-function Form() {
+function Form({ onAddItems }) {
   const [description, setDescription] = useState("");
   const [quantity, setQuantity] = useState(0);
 
   function handleSubmit(e) {
     e.preventDefault();
     if (!description) return;
+
     const newItem = { description, quantity, id: Date.now(), packed: false };
-    console.log(newItem);
+    onAddItems(newItem);
 
     setDescription("");
     setQuantity(1);
@@ -62,11 +70,11 @@ function Form() {
   );
 }
 
-function PackingList() {
+function PackingList({ items }) {
   return (
     <div className="list">
       <ul>
-        {initialItems.map((item) => (
+        {items.map((item) => (
           <Item item={item} key={item.id} />
         ))}
       </ul>
