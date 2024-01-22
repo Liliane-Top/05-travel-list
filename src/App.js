@@ -13,13 +13,17 @@ export default function App() {
   function handleAddItem(item) {
     setItems((items) => [...items, item]);
   }
+
+  function handleDeleteItem(id) {
+    setItems(items.filter((item) => item.id !== id));
+  }
   return (
     <div className="app">
       <Logo />
       {/* to give access from the Form prop to access the handleAddItem method */}
       <Form onAddItems={handleAddItem} />
       {/* to give Packinglist access to the array of items to display */}
-      <PackingList items={items} />
+      <PackingList items={items} onDeleteItem={handleDeleteItem} />
       <Stats />
     </div>
   );
@@ -31,13 +35,14 @@ function Logo() {
 
 function Form({ onAddItems }) {
   const [description, setDescription] = useState("");
-  const [quantity, setQuantity] = useState(0);
+  const [quantity, setQuantity] = useState(1);
 
   function handleSubmit(e) {
     e.preventDefault();
     if (!description) return;
 
     const newItem = { description, quantity, id: Date.now(), packed: false };
+    // to be able to setItems in parent component
     onAddItems(newItem);
 
     setDescription("");
@@ -70,25 +75,32 @@ function Form({ onAddItems }) {
   );
 }
 
-function PackingList({ items }) {
+function PackingList({ items, onDeleteItem }) {
   return (
     <div className="list">
       <ul>
         {items.map((item) => (
-          <Item item={item} key={item.id} />
+          <Item item={item} key={item.id} onDeleteItem={onDeleteItem} />
         ))}
       </ul>
     </div>
   );
 }
 
-function Item({ item }) {
+function Item({ item, onDeleteItem }) {
+  const [packed, setPacked] = useState(false);
+
   return (
     <li>
-      <span style={item.packed ? { textDecoration: "line-through" } : {}}>
+      <input
+        type="checkbox"
+        value={item.packed}
+        onChange={() => setPacked(!packed)}
+      />
+      <span style={packed ? { textDecoration: "line-through" } : {}}>
         {item.quantity} {item.description}
       </span>
-      <button>❌</button>
+      <button onClick={() => onDeleteItem(item.id)}>❌</button>
     </li>
   );
 }
