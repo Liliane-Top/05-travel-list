@@ -30,6 +30,13 @@ export default function App() {
     setItems(items.filter((item) => item.id !== id));
   }
 
+  function handleClearList() {
+    const confirmed = window.confirm(
+      "are you sure you want to delete all items?"
+    );
+    if (confirmed) setItems([]);
+  }
+
   return (
     <div className="app">
       <Logo />
@@ -40,6 +47,7 @@ export default function App() {
         items={items}
         onDeleteItem={handleDeleteItem}
         onToggleItem={handleToggleItem}
+        onClearList={handleClearList}
       />
       <Stats items={items} />
     </div>
@@ -92,11 +100,30 @@ function Form({ onAddItems }) {
   );
 }
 
-function PackingList({ items, onDeleteItem, onToggleItem }) {
+function PackingList({ items, onDeleteItem, onToggleItem, onClearList }) {
+  const [sortBy, setSortBy] = useState("input");
+  let sortedItems;
+
+  if (sortBy === "input") {
+    sortedItems = items;
+  }
+  if (sortBy === "description") {
+    //first take a copy of the original array other it gets changed too
+    sortedItems = items
+      .slice()
+      .sort((x, y) => x.description.localeCompare(y.description));
+  }
+  if (sortBy === "packed") {
+    sortedItems = items
+      .slice()
+      // .sort((x, y) => (x.packed === y.packed ? 0 : x.packed ? 1 : -1));
+      .sort((x, y) => Number(x.packed) - Number(y.packed));
+  }
+
   return (
     <div className="list">
       <ul>
-        {items.map((item) => (
+        {sortedItems.map((item) => (
           <Item
             item={item}
             key={item.id}
@@ -105,6 +132,18 @@ function PackingList({ items, onDeleteItem, onToggleItem }) {
           />
         ))}
       </ul>
+      <div className="actions">
+        <select
+          name="sort"
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          <option value="input">Sort By Input Order</option>
+          <option value="description">Sort By Description</option>
+          <option value="packed">Sort By Packed Status</option>
+        </select>
+        <button onClick={onClearList}>Clear List</button>
+      </div>
     </div>
   );
 }
@@ -129,6 +168,7 @@ function Item({ item, onDeleteItem, onToggleItem }) {
 }
 
 function Stats({ items }) {
+  //conditional rendering if no items have been added so items.length is falsy as it is 0
   if (!items.length)
     return (
       <p className="stats">
@@ -136,8 +176,8 @@ function Stats({ items }) {
       </p>
     );
 
-  //iterate over all items in array and add every item to new array which has item.pack === true and get length of this new array
   const numItems = items.length;
+  //iterate over all items in array and add every item to new array which has item.pack === true and get length of this new array
   const numPacked = items.filter((item) => item.packed).length;
   const percentage = Math.round((numPacked / items.length) * 100);
   return (
